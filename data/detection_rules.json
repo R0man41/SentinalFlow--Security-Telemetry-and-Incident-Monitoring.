@@ -1,0 +1,267 @@
+[
+  {
+    "id": "SQLI_001",
+    "pattern": "(?i)\\bOR\\b\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+['\"]?",
+    "type": "SQL Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects classic tautology based SQL injection (e.g., OR 1=1)."
+  },
+  {
+    "id": "SQLI_002",
+    "pattern": "(?i)UNION\\s+(ALL\\s+)?SELECT",
+    "type": "SQL Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects UNION-based SQL injection attempts."
+  },
+  {
+    "id": "SQLI_003",
+    "pattern": "(?i)\\b(DROP|TRUNCATE|DELETE)\\s+TABLE",
+    "type": "SQL Injection",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects destructive SQL commands."
+  },
+  {
+    "id": "SQLI_004",
+    "pattern": "(?i)SLEEP\\(\\d+\\)|BENCHMARK\\(",
+    "type": "SQL Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects time-based blind SQL injection."
+  },
+  {
+    "id": "SQLI_005",
+    "pattern": "(?i)INFORMATION_SCHEMA|pg_sleep|user_objects",
+    "type": "SQL Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects access to database metadata or system functions."
+  },
+  {
+    "id": "XSS_001",
+    "pattern": "(?i)<script[^>]*>.*?</script>",
+    "type": "XSS",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects standard script tag injection."
+  },
+  {
+    "id": "XSS_002",
+    "pattern": "(?i)on\\w+\\s*=\\s*['\"].*?['\"]",
+    "type": "XSS",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects inline event handlers (onerror, onload, onclick, etc.)."
+  },
+  {
+    "id": "XSS_003",
+    "pattern": "(?i)javascript\\s*:\\s*alert\\(",
+    "type": "XSS",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects javascript URI schemes with alert calls."
+  },
+  {
+    "id": "XSS_004",
+    "pattern": "(?i)<(iframe|svg|embed|object|base|meta)\\b",
+    "type": "XSS",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects high-risk HTML tags often used for XSS or phishing."
+  },
+  {
+    "id": "NOSQL_001",
+    "pattern": "\\$(gt|lt|ne|eq|where|regex)\\s*:",
+    "type": "NoSQL Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects MongoDB-style operator injection in JSON bodies."
+  },
+  {
+    "id": "TRAV_001",
+    "pattern": "(\\.\\.[\\\\/])+",
+    "type": "Path Traversal",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects directory traversal sequences (../ or ..\\)."
+  },
+  {
+    "id": "TRAV_002",
+    "pattern": "/etc/(passwd|shadow|hosts|group)",
+    "type": "Local File Inclusion",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects access to sensitive Linux system files."
+  },
+  {
+    "id": "TRAV_003",
+    "pattern": "(?i)C:\\\\(Windows\\\\System32|boot\\.ini)",
+    "type": "Local File Inclusion",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects access to sensitive Windows system files."
+  },
+  {
+    "id": "CMD_001",
+    "pattern": "[&|;]\\s*(whoami|id|ls|cat|dir|type|ipconfig|ifconfig)",
+    "type": "Command Injection",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects command chaining used to execute OS commands."
+  },
+  {
+    "id": "CMD_002",
+    "pattern": "(?i)powershell(\\.exe)?\\s+-e",
+    "type": "Command Injection",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects encoded PowerShell command execution."
+  },
+  {
+    "id": "SSRF_001",
+    "pattern": "(?i)https?://(127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0|169\\.254\\.169\\.254|metadata\\.google\\.internal|instance-data)",
+    "type": "SSRF",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects attempts to access internal loopback or cloud metadata services (AWS, GCP, Azure)."
+  },
+  {
+    "id": "XXE_001",
+    "pattern": "(?i)<!ENTITY\\s+.*?SYSTEM\\s+['\"]",
+    "type": "XXE",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects XML External Entity definitions."
+  },
+  {
+    "id": "BF_001",
+    "pattern": "(?i)(?:\\b(?:login|sign[- ]?in|authentication|auth|password)\\b.*\\b(?:failed|incorrect|invalid|denied|rejected|unsuccessful)\\b|\\b(?:failed|incorrect|invalid|denied|rejected|unsuccessful)\\b.*\\b(?:login|sign[- ]?in|authentication|auth|password)\\b)",
+    "type": "Brute Force",
+    "severity": "CRITICAL",
+    "regex": true,
+    "repeatThreshold": 3,
+    "description": "Tracks repeated authentication failures, including failed login attempts and invalid credentials."
+  },
+  {
+    "id": "EXFIL_001",
+    "pattern": "(?i)(curl|wget|scp|ftp|rsync)\\s+.*?https?://",
+    "type": "Data Exfiltration",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects use of transfer tools pointed at external URLs."
+  },
+  {
+    "id": "SENS_001",
+    "pattern": "(?i)(api[_-]?key|secret[_-]?key|auth[_-]?token|password|private[_-]?key)\\s*[:=]\\s*['\"].*?['\"]",
+    "type": "Sensitive Data Exposure",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects hardcoded credentials or secrets in logs/code."
+  },
+  {
+    "id": "SENS_002",
+    "pattern": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+    "type": "PII Exposure",
+    "severity": "LOW",
+    "regex": true,
+    "description": "Detects email addresses (Potential PII leakage)."
+  },
+  {
+    "id": "SCAN_001",
+    "pattern": "(?i)User-Agent:\\s*.*(sqlmap|nikto|nmap|burp|dirbuster|gobuster|zgrab|masscan)",
+    "type": "Scanner Detection",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects well-known security scanning tools via User-Agent."
+  },
+  {
+    "id": "LDAP_001",
+    "pattern": "([&|!][(].*=[.*])",
+    "type": "LDAP Injection",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects LDAP filter manipulation patterns."
+  },
+  {
+    "id": "DESER_001",
+    "pattern": "(?i)(O:8:\"stdClass\":|rO0AB|TmV0L0JpbmFyeUZvcm1hdHRlcik=)",
+    "type": "Insecure Deserialization",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects serialized object signatures (PHP, Java, .NET)."
+  },
+  {
+    "id": "HDR_001",
+    "pattern": "[\\r\\n]\\s*(Set-Cookie|Location|Content-Type)\\s*:",
+    "type": "HTTP Header Injection",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects CRLF sequences used for HTTP Response Splitting."
+  },
+  {
+    "id": "CONF_001",
+    "pattern": "\\.(env|git|htaccess|config|bak|swp)$",
+    "type": "Configuration Exposure",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects access to sensitive configuration or metadata directories."
+  },
+  {
+    "id": "SSTI_001",
+    "pattern": "(?i)(\\{\\{|\\{%|\\#\\{|\\$\\{).*?(\\}\\}|%\\}|\\})",
+    "type": "Server-Side Template Injection",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects template injection structures (e.g., Jinja2, Twig, Spring, Ruby)."
+  },
+  {
+    "id": "LOG4_001",
+    "pattern": "(?i)\\$\\{jndi:(ldap|rmi|dns|nis|iiop|corba|nds|http):",
+    "type": "Log4Shell",
+    "severity": "CRITICAL",
+    "regex": true,
+    "description": "Detects Log4j JNDI lookup exploitation attempts."
+  },
+  {
+    "id": "REDIR_001",
+    "pattern": "(?i)(redirect_uri|url|next|return_to|dest)\\s*=\\s*https?://",
+    "type": "Open Redirect",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects potential open redirect vulnerabilities in query parameters."
+  },
+  {
+    "id": "GRAPHQL_001",
+    "pattern": "\\b(__schema|__type)\\b",
+    "type": "GraphQL Introspection",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects attempts to introspect GraphQL schemas."
+  },
+  {
+    "id": "CRLF_001",
+    "pattern": "(\\\\r|\\\\n|%0[da]|%0[DA])",
+    "type": "CRLF Injection",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects carriage return/line feed characters in input indicating potential log forging or HTTP splitting."
+  },
+  {
+    "id": "JWT_001",
+    "pattern": "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]*",
+    "type": "JWT Exposure",
+    "severity": "HIGH",
+    "regex": true,
+    "description": "Detects potentially leaked or injected JSON Web Tokens."
+  },
+  {
+    "id": "PROM_001",
+    "pattern": "(?i)/actuator/|/metrics|/prometheus",
+    "type": "Information Disclosure",
+    "severity": "MEDIUM",
+    "regex": true,
+    "description": "Detects access to sensitive application monitoring endpoints."
+  }
+]

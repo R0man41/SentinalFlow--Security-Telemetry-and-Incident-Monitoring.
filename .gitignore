@@ -1,0 +1,35 @@
+# Installed dependencies and local Python environments
+node_modules/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local application state and generated outputs
+/backend/incidents.json
+/backend/.incidents.*.tmp
+coverage/
+.nyc_output/
+dist/
+build/
+.cache/
+
+# Local environment settings; keep the safe template
+.env
+.env.*
+!.env.example
+
+# Logs, temporary files, and local backups
+npm-debug.log*
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Common OS/editor temporary files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~

@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Incident Management System</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23122033'/%3E%3Cpath d='M32 11 56 53H8z' fill='%23ff6f3d'/%3E%3Crect x='29' y='24' width='6' height='15' rx='3' fill='white'/%3E%3Ccircle cx='32' cy='45' r='3' fill='white'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-orb orb-a" aria-hidden="true"></div>
+    <div class="bg-orb orb-b" aria-hidden="true"></div>
+
+    <main class="container">
+      <header class="masthead reveal">
+        <div>
+          <p class="eyebrow">Ops Console</p>
+          <h1>Incident Management System</h1>
+          <p class="subtitle">Live operational awareness for incident triage, assignment, and SLA protection.</p>
+        </div>
+        <div class="status-chip">
+          <span class="chip-dot"></span>
+          <span id="last-refresh">Awaiting sync...</span>
+        </div>
+      </header>
+
+      <div id="health-banner" class="health-banner health-healthy reveal">System Health: Healthy (Score: 0)</div>
+
+      <section class="stats-row reveal">
+        <article class="stat-card">
+          <p class="card-label">Total Incidents</p>
+          <p id="stat-total" class="card-value">0</p>
+        </article>
+        <article class="stat-card">
+          <p class="card-label">Open</p>
+          <p id="stat-open" class="card-value">0</p>
+        </article>
+        <article class="stat-card">
+          <p class="card-label">Critical Active</p>
+          <p id="stat-critical" class="card-value">0</p>
+        </article>
+        <article class="stat-card">
+          <p class="card-label">Resolved</p>
+          <p id="stat-resolved" class="card-value">0</p>
+        </article>
+      </section>
+
+      <section class="filter-bar reveal">
+        <label class="field">
+          <span>Severity</span>
+          <select id="severity-filter">
+            <option value="">All Severities</option>
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Status</span>
+          <select id="status-filter">
+            <option value="">All Statuses</option>
+            <option value="OPEN">OPEN</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="RESOLVED">RESOLVED</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Sort</span>
+          <select id="sort-filter">
+            <option value="date">Newest</option>
+            <option value="severity">Severity</option>
+          </select>
+        </label>
+
+        <button id="new-incident-btn" class="btn btn-primary">+ New Incident</button>
+      </section>
+
+      <section class="panel reveal" id="log-analysis-panel" style="display: block;">
+        <h2>Analyze Logs</h2>
+        <label for="log-input">Raw Logs</label>
+        <textarea id="log-input" rows="6" placeholder="Paste raw log text here..."></textarea>
+        <div class="panel-actions">
+          <button id="analyze-logs-btn" type="button" class="btn btn-primary">Analyze Logs</button>
+        </div>
+        <div id="log-analysis-result" class="analysis-output">
+          <div id="analysis-summary">Enter logs and click Analyze Logs to detect threats.</div>
+          <div id="matched-rules" class="matched-rules"></div>
+        </div>
+      </section>
+
+      <section class="table-shell reveal">
+        <div class="table-headline">
+          <h2>Incident Stream</h2>
+          <p>Click a row to inspect timeline details.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>SLA Deadline</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incidents-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="create-panel" class="panel reveal">
+        <h2>Create Incident</h2>
+        <form id="create-form">
+          <label for="create-title">Title</label>
+          <input id="create-title" type="text" required />
+
+          <label for="create-description">Description</label>
+          <textarea id="create-description" rows="3"></textarea>
+
+          <label for="create-severity">Severity</label>
+          <select id="create-severity" required>
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+
+          <label for="create-assigned-to">Assigned To</label>
+          <input id="create-assigned-to" type="text" required />
+
+          <div class="panel-actions">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" id="create-cancel-btn" class="btn">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="edit-panel" class="panel reveal">
+        <h2>Edit Incident</h2>
+        <form id="edit-form">
+          <label for="edit-status">Status</label>
+          <select id="edit-status" required>
+            <option value="OPEN">OPEN</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="RESOLVED">RESOLVED</option>
+          </select>
+
+          <label for="edit-assigned-to">Assigned To</label>
+          <input id="edit-assigned-to" type="text" required />
+
+          <div class="panel-actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="edit-cancel-btn" class="btn">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="timeline-panel" class="panel reveal">
+        <h2>Timeline</h2>
+        <div id="timeline-body"></div>
+      </section>
+    </main>
+
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

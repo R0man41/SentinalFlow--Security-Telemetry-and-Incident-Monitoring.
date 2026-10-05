@@ -1,6 +1,8 @@
 # Installed dependencies and local Python environments
 node_modules/
 .venv/
+venv/
+ENV/
 __pycache__/
 *.py[cod]
 

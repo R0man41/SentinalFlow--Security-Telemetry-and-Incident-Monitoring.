@@ -345,4 +345,9 @@ function parseLogBatch(input, options = {}) {
   return batch;
 }
 
-module.exports = { parseLogBatch, parseIsoTimestamp };
+module.exports = {
+  parseLogBatch,
+  parseIsoTimestamp,
+  HTTP_METHODS,
+  MAX_HTTP_BODY_BYTES_PER_EVENT
+};

@@ -1,181 +1,154 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Incident Management System</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23122033'/%3E%3Cpath d='M32 11 56 53H8z' fill='%23ff6f3d'/%3E%3Crect x='29' y='24' width='6' height='15' rx='3' fill='white'/%3E%3Ccircle cx='32' cy='45' r='3' fill='white'/%3E%3C/svg%3E"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <meta name="theme-color" content="#0b1118" />
+    <title>Security Monitoring | Incident Management</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="bg-grid" aria-hidden="true"></div>
-    <div class="bg-orb orb-a" aria-hidden="true"></div>
-    <div class="bg-orb orb-b" aria-hidden="true"></div>
-
-    <main class="container">
-      <header class="masthead reveal">
-        <div>
-          <p class="eyebrow">Ops Console</p>
-          <h1>Incident Management System</h1>
-          <p class="subtitle">Live operational awareness for incident triage, assignment, and SLA protection.</p>
-        </div>
-        <div class="status-chip">
-          <span class="chip-dot"></span>
-          <span id="last-refresh">Awaiting sync...</span>
+    <main class="dashboard-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Security Monitoring home">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span class="brand-copy">
+            <span class="brand-name">Incident Management</span>
+            <span class="brand-caption">SECURITY MONITORING</span>
+          </span>
+        </a>
+        <div class="topbar-actions">
+          <div id="health-banner" class="health-pill health-loading" role="status" aria-live="polite">
+            <span class="health-dot" aria-hidden="true"></span>
+            <span id="health-label">Checking system</span>
+          </div>
+          <span id="last-refresh" class="sync-label">Waiting for first sync</span>
+          <button id="refresh-btn" class="button button-quiet" type="button" aria-label="Refresh dashboard">
+            <span aria-hidden="true">↻</span><span>Refresh</span>
+          </button>
         </div>
       </header>
 
-      <div id="health-banner" class="health-banner health-healthy reveal">System Health: Healthy (Score: 0)</div>
-
-      <section class="stats-row reveal">
-        <article class="stat-card">
-          <p class="card-label">Total Incidents</p>
-          <p id="stat-total" class="card-value">0</p>
-        </article>
-        <article class="stat-card">
-          <p class="card-label">Open</p>
-          <p id="stat-open" class="card-value">0</p>
-        </article>
-        <article class="stat-card">
-          <p class="card-label">Critical Active</p>
-          <p id="stat-critical" class="card-value">0</p>
-        </article>
-        <article class="stat-card">
-          <p class="card-label">Resolved</p>
-          <p id="stat-resolved" class="card-value">0</p>
-        </article>
+      <section id="page-error" class="notice notice-error" role="alert" hidden>
+        <div><strong>Dashboard could not be refreshed.</strong><span id="page-error-message">Check your connection and try again.</span></div>
+        <button id="retry-btn" class="button button-quiet" type="button">Try again</button>
       </section>
 
-      <section class="filter-bar reveal">
-        <label class="field">
-          <span>Severity</span>
-          <select id="severity-filter">
-            <option value="">All Severities</option>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Status</span>
-          <select id="status-filter">
-            <option value="">All Statuses</option>
-            <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="RESOLVED">RESOLVED</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Sort</span>
-          <select id="sort-filter">
-            <option value="date">Newest</option>
-            <option value="severity">Severity</option>
-          </select>
-        </label>
-
-        <button id="new-incident-btn" class="btn btn-primary">+ New Incident</button>
-      </section>
-
-      <section class="panel reveal" id="log-analysis-panel" style="display: block;">
-        <h2>Analyze Logs</h2>
-        <label for="log-input">Raw Logs</label>
-        <textarea id="log-input" rows="6" placeholder="Paste raw log text here..."></textarea>
-        <div class="panel-actions">
-          <button id="analyze-logs-btn" type="button" class="btn btn-primary">Analyze Logs</button>
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Operations / Overview</p>
+          <h1 id="page-title">Security overview</h1>
+          <p class="page-description">Monitor active incidents, review detections, and keep response work moving.</p>
         </div>
-        <div id="log-analysis-result" class="analysis-output">
-          <div id="analysis-summary">Enter logs and click Analyze Logs to detect threats.</div>
-          <div id="matched-rules" class="matched-rules"></div>
+        <button id="new-incident-btn" class="button button-primary" type="button"><span aria-hidden="true">＋</span> New incident</button>
+      </section>
+
+      <section class="overview-section" aria-labelledby="overview-title">
+        <div class="section-heading compact-heading">
+          <div><p class="eyebrow">At a glance</p><h2 id="overview-title">Incident overview</h2></div>
+          <span class="updated-copy">Updates every 10 seconds</span>
+        </div>
+        <div class="stats-grid" aria-live="polite">
+          <article class="stat-card stat-total">
+            <div class="stat-icon" aria-hidden="true">◫</div><p class="stat-label">Total incidents</p>
+            <p id="stat-total" class="stat-value">—</p><p class="stat-footnote">All recorded cases</p>
+          </article>
+          <article class="stat-card stat-open">
+            <div class="stat-icon" aria-hidden="true">◉</div><p class="stat-label">Open incidents</p>
+            <p id="stat-open" class="stat-value">—</p><p class="stat-footnote">Awaiting investigation</p>
+          </article>
+          <article class="stat-card stat-critical">
+            <div class="stat-icon" aria-hidden="true">▲</div><p class="stat-label">Critical active</p>
+            <p id="stat-critical" class="stat-value">—</p><p class="stat-footnote">Unresolved critical severity</p>
+          </article>
+          <article class="stat-card stat-resolved">
+            <div class="stat-icon" aria-hidden="true">✓</div><p class="stat-label">Resolved</p>
+            <p id="stat-resolved" class="stat-value">—</p><p class="stat-footnote">Closed incidents</p>
+          </article>
+          <article class="stat-card stat-health">
+            <div class="stat-icon" aria-hidden="true">⌁</div><p class="stat-label">System health</p>
+            <p id="stat-health-label" class="stat-value stat-value-word">—</p><p id="stat-health-score" class="stat-footnote">Score unavailable</p>
+          </article>
         </div>
       </section>
 
-      <section class="table-shell reveal">
-        <div class="table-headline">
-          <h2>Incident Stream</h2>
-          <p>Click a row to inspect timeline details.</p>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Severity</th>
-                <th>Status</th>
-                <th>Assigned To</th>
-                <th>SLA Deadline</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="incidents-body"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="create-panel" class="panel reveal">
-        <h2>Create Incident</h2>
-        <form id="create-form">
-          <label for="create-title">Title</label>
-          <input id="create-title" type="text" required />
-
-          <label for="create-description">Description</label>
-          <textarea id="create-description" rows="3"></textarea>
-
-          <label for="create-severity">Severity</label>
-          <select id="create-severity" required>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
-
-          <label for="create-assigned-to">Assigned To</label>
-          <input id="create-assigned-to" type="text" required />
-
-          <div class="panel-actions">
-            <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="button" id="create-cancel-btn" class="btn">Cancel</button>
+      <section class="incident-section" aria-labelledby="incidents-title">
+        <div class="section-heading incident-heading">
+          <div><p class="eyebrow">Triage queue</p><h2 id="incidents-title">Incidents <span id="incident-count" class="heading-count">—</span></h2>
+            <p class="section-description">Select a case to review its findings, timeline, and response actions.</p>
           </div>
-        </form>
-      </section>
+        </div>
 
-      <section id="edit-panel" class="panel reveal">
-        <h2>Edit Incident</h2>
-        <form id="edit-form">
-          <label for="edit-status">Status</label>
-          <select id="edit-status" required>
-            <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="RESOLVED">RESOLVED</option>
-          </select>
+        <div class="filters" role="search" aria-label="Filter incidents">
+          <label class="search-field"><span class="sr-only">Search incidents</span><span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-filter" type="search" placeholder="Search incidents…" autocomplete="off" />
+          </label>
+          <label class="filter-field"><span class="sr-only">Filter by severity</span>
+            <select id="severity-filter"><option value="">All severities</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option></select>
+          </label>
+          <label class="filter-field"><span class="sr-only">Filter by status</span>
+            <select id="status-filter"><option value="">All statuses</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="RESOLVED">Resolved</option></select>
+          </label>
+          <label class="filter-field"><span class="sr-only">Sort incidents</span>
+            <select id="sort-filter"><option value="date">Newest first</option><option value="severity">Severity</option></select>
+          </label>
+          <button id="clear-filters-btn" class="button button-quiet clear-filters" type="button">Clear filters</button>
+        </div>
 
-          <label for="edit-assigned-to">Assigned To</label>
-          <input id="edit-assigned-to" type="text" required />
-
-          <div class="panel-actions">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <button type="button" id="edit-cancel-btn" class="btn">Cancel</button>
+        <div class="incident-list-panel">
+          <div class="incident-columns" aria-hidden="true">
+            <span>Incident</span><span>Severity</span><span>Status</span><span>Assignee</span><span>SLA deadline</span><span></span>
           </div>
-        </form>
+          <div id="incidents-list" class="incident-list" aria-live="polite" aria-busy="true">
+            <div class="loading-state"><span class="loader" aria-hidden="true"></span><span>Loading incidents…</span></div>
+          </div>
+        </div>
       </section>
 
-      <section id="timeline-panel" class="panel reveal">
-        <h2>Timeline</h2>
-        <div id="timeline-body"></div>
-      </section>
+      <details class="manual-analysis">
+        <summary><span><span class="eyebrow">Manual analysis</span><strong>Analyze logs</strong><small>Paste logs for testing and debugging</small></span><span class="summary-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="analysis-content">
+          <label for="log-input">Raw log text</label>
+          <textarea id="log-input" rows="6" placeholder="Paste raw log text here…"></textarea>
+          <div class="analysis-actions"><button id="analyze-logs-btn" type="button" class="button button-primary">Analyze logs</button></div>
+          <div id="log-analysis-result" class="analysis-output" role="status" aria-live="polite">
+            <p id="analysis-summary" class="muted-copy">Enter logs and select Analyze logs to detect threats.</p>
+            <div id="matched-rules" class="matched-rules"></div>
+          </div>
+        </div>
+      </details>
+
+      <footer class="page-footer"><span>Security Monitoring</span><span>Incident data refreshes automatically</span></footer>
     </main>
+
+    <dialog id="create-dialog" class="form-dialog" aria-labelledby="create-dialog-title">
+      <form id="create-form" method="dialog" class="dialog-card">
+        <div class="dialog-heading"><div><p class="eyebrow">Case management</p><h2 id="create-dialog-title">Create incident</h2></div><button id="create-close-btn" class="icon-button" type="button" aria-label="Close create incident form">×</button></div>
+        <label for="create-title">Title</label><input id="create-title" type="text" required maxlength="200" />
+        <label for="create-description">Description</label><textarea id="create-description" rows="3"></textarea>
+        <div class="form-grid"><div><label for="create-severity">Severity</label><select id="create-severity" required><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option></select></div>
+          <div><label for="create-assigned-to">Assigned to</label><input id="create-assigned-to" type="text" required /></div></div>
+        <p id="create-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions"><button id="create-cancel-btn" type="button" class="button button-quiet">Cancel</button><button type="submit" class="button button-primary">Create incident</button></div>
+      </form>
+    </dialog>
+
+    <div id="drawer-layer" class="drawer-layer" hidden>
+      <div class="drawer-backdrop" aria-hidden="true"></div>
+      <aside id="incident-drawer" class="incident-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
+        <header class="drawer-header">
+          <div class="drawer-title-group">
+            <p class="eyebrow">Incident investigation</p>
+            <div class="drawer-header-summary">
+              <div class="drawer-header-copy"><span id="drawer-incident-id" class="mono incident-id-large">Incident ID</span><h2 id="drawer-title">Incident details</h2></div>
+              <span id="drawer-severity" class="badge badge-unknown">Unknown</span>
+            </div>
+          </div>
+          <button id="drawer-close-btn" class="icon-button" type="button" aria-label="Close incident details">×</button>
+        </header>
+        <div id="drawer-content" class="drawer-content"><div class="loading-state"><span class="loader" aria-hidden="true"></span><span>Loading incident…</span></div></div>
+      </aside>
+    </div>
 
     <script src="api.js"></script>
     <script src="app.js"></script>

@@ -4,11 +4,13 @@ const { execFileSync } = require("node:child_process");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
+const { configureTestCredentials, testAdminAuthorization } = require("./helpers/adminAuth");
 
 const tempDirectory = require("node:fs").mkdtempSync(path.join(os.tmpdir(), "incident-app-tests-"));
 const dataFile = path.join(tempDirectory, "incidents.json");
 const originalIncidentsFile = process.env.INCIDENTS_FILE;
 process.env.INCIDENTS_FILE = dataFile;
+configureTestCredentials();
 
 const app = require("../backend/server");
 const db = require("../backend/db");
@@ -76,7 +78,7 @@ async function restartServer() {
 }
 
 async function request(method, route, body) {
-  const options = { method, headers: {} };
+  const options = { method, headers: { Authorization: testAdminAuthorization() } };
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
@@ -173,12 +175,20 @@ describe("local incident application characterization", { concurrency: false }, 
     assert.equal((await request("POST", "/incidents", { title: "Bad", severity: "BOGUS", assignedTo: "Test" })).response.status, 400);
     assert.equal((await request("POST", "/incidents", { title: "Bad", severity: "HIGH", assignedTo: " " })).response.status, 400);
     assert.equal((await request("POST", "/incidents", { title: "Bad", severity: "HIGH", assignedTo: "Test", createdAt: "2000-01-01" })).response.status, 400);
+    assert.equal((await request("POST", "/incidents", {
+      title: "Forged relationship", severity: "HIGH", assignedTo: "Test", findingRefs: [{ findingId: "forged" }]
+    })).response.status, 400);
+    assert.equal((await request("POST", "/incidents", {
+      title: "Forged event IDs", severity: "HIGH", assignedTo: "Test", eventIds: ["forged"]
+    })).response.status, 400);
   });
 
   it("rejects invalid update status, server timestamps, and invalid identifiers", async () => {
     const created = (await request("POST", "/incidents", { title: "Valid", severity: "LOW", assignedTo: "Test" })).json;
     assert.equal((await request("PUT", `/incidents/${created.incidentId}`, { status: "CLOSED" })).response.status, 400);
     assert.equal((await request("PUT", `/incidents/${created.incidentId}`, { updatedAt: "2000-01-01" })).response.status, 400);
+    assert.equal((await request("PUT", `/incidents/${created.incidentId}`, { findingRefs: [] })).response.status, 400);
+    assert.equal((await request("PUT", `/incidents/${created.incidentId}`, { eventIds: [] })).response.status, 400);
     assert.equal((await request("PUT", "/incidents/bad-id", { status: "OPEN" })).response.status, 400);
   });
 
@@ -328,10 +338,12 @@ describe("local incident application characterization", { concurrency: false }, 
       assert.equal(result.json.detection.status, "threat_detected");
       assert.equal(result.json.detection.severity, "CRITICAL");
       assert.equal(result.json.detection.matchedRules.filter((rule) => rule.id === "BF_001").length, 1);
-      const serialized = JSON.stringify(result.json);
+      const serializedDetection = JSON.stringify(result.json.detection);
       for (const internalName of ["groupId", "eventIds", "evidence", "correlationWindow", "windowMs", "Finding", "clientIp"]) {
-        assert.equal(serialized.includes(`\"${internalName}\"`), false, `${internalName} must not be an API property`);
+        assert.equal(serializedDetection.includes(`\"${internalName}\"`), false, `${internalName} must not be a detection API property`);
       }
+      assert.ok(Array.isArray(result.json.incident.findingRefs));
+      assert.ok(Array.isArray(result.json.incident.eventIds));
     }
     assert.equal(contextAware.json.detection.matchedRules.filter((rule) => rule.id === "BF_001").length, 1);
     assert.ok(contextAware.json.detection.matchedRules.every((rule) =>
@@ -554,7 +566,8 @@ describe("local incident application characterization", { concurrency: false }, 
   });
 
   it("creates exactly one incident for a request matching multiple rules and preserves current fields", async () => {
-    const logs = "OR 1=1 <script>alert(1)</script>";
+    const sensitiveValue = "Bearer fake-manual-token-DO-NOT-USE-8391";
+    const logs = `Authorization: ${sensitiveValue}\nOR 1=1 <script>alert(1)</script>`;
     const { response, json } = await request("POST", "/analyze-logs", { logs });
     assert.equal(response.status, 200);
     assert.deepEqual(json.detection.matchedRules.map((match) => match.id), ["SQLI_001", "XSS_001"]);
@@ -567,8 +580,16 @@ describe("local incident application characterization", { concurrency: false }, 
       timestamp: json.incident.createdAt, action: "CREATED", from: null, to: "OPEN", by: "Auto-System"
     });
     assert.equal(Date.parse(json.incident.slaDeadline) - Date.parse(json.incident.createdAt), 8 * 60 * 60 * 1000);
+    assert.equal(json.incident.description,
+      "Manual log analysis detected one or more security findings. Matched rules: SQLI_001 (SQL Injection), XSS_001 (XSS)."
+    );
     assert.match(json.incident.description, /SQLI_001/);
-    assert.match(json.incident.description, /OR 1=1 <script>alert\(1\)<\/script>/);
+    assert.match(json.incident.description, /XSS_001/);
+    assert.doesNotMatch(json.incident.description, /Authorization:|OR 1=1|<script>|fake-manual-token/);
+    assert.equal(JSON.stringify(json.incident).includes(sensitiveValue), false);
+    const persistedRepresentation = await fs.readFile(dataFile, "utf8");
+    assert.equal(persistedRepresentation.includes(sensitiveValue), false);
+    assert.equal(persistedRepresentation.includes(logs), false);
     assert.equal((await db.getAllIncidents()).length, 1);
 
     const repeated = await request("POST", "/analyze-logs", { logs });
@@ -582,12 +603,12 @@ describe("local incident application characterization", { concurrency: false }, 
     }
 
     const malformed = await fetch(`${baseUrl}/analyze-logs`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: "{"
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: testAdminAuthorization() }, body: "{"
     });
     assert.equal(malformed.status, 400);
 
     const oversized = await fetch(`${baseUrl}/analyze-logs`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logs: "x".repeat(110 * 1024) })
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: testAdminAuthorization() }, body: JSON.stringify({ logs: "x".repeat(110 * 1024) })
     });
     assert.equal(oversized.status, 413);
   });

@@ -15,6 +15,7 @@ const SEVERITY_WEIGHT = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
 const ruleById = new Map(detectionRules.map((rule) => [rule.id, rule]));
 const ruleOrder = new Map(detectionRules.map((rule, index) => [rule.id, index]));
 const bf001Rule = ruleById.get(BF001_RULE_ID);
+const BF001_THRESHOLD = Number(bf001Rule?.repeatThreshold) || 1;
 
 if (!bf001Rule) throw new Error(`${BF001_RULE_ID} was not found in the detection rule catalog`);
 
@@ -30,6 +31,10 @@ function hasRequiredContext(event) {
     typeof event?.clientIp === "string" && net.isIP(event.clientIp) !== 0 &&
     typeof authenticationResult === "string" && authenticationResult.trim().length > 0 &&
     Boolean(parseIsoTimestamp(event?.eventTime));
+}
+
+function isBruteForceCorrelationEvent(event) {
+  return countPatternMatches(eventContent(event), bf001Rule) === 1 && hasRequiredContext(event);
 }
 
 function makeContextMatch(qualifyingGroups, relevantEvents) {
@@ -135,6 +140,8 @@ function applyBruteForceContext(detection, contextResult) {
 
 module.exports = {
   BF001_CORRELATION_WINDOW_MS,
+  BF001_THRESHOLD,
+  isBruteForceCorrelationEvent,
   evaluateBruteForceContext,
   applyBruteForceContext
 };
